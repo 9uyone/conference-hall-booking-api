@@ -4,10 +4,7 @@ using ABP_test_task.Services.Analytics;
 namespace ABP_test_task.Endpoints;
 
 public static class ReportsEndpoints {
-	public static IEndpointRouteBuilder MapReportsEndpoints(this IEndpointRouteBuilder app) {
-		var group = app.MapGroup("/api/reports")
-			.WithTags("Reports");
-
+	public static IEndpointRouteBuilder MapReportsEndpoints(this RouteGroupBuilder group) {
 		group.MapGet("/revenue", GetRevenueAsync)
 			.WithName("GetRevenueReport")
 			.WithSummary("Get revenue report for a date range")

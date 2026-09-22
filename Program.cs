@@ -72,6 +72,8 @@ app.MapGroup("/api/bookings")
    .MapBookingEndpoints()
    .WithTags("Bookings");
 
-app.MapReportsEndpoints();
+app.MapGroup("/api/reports")
+	.WithTags("Reports")
+	.MapReportsEndpoints();
 
 app.Run();

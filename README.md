@@ -1,80 +1,88 @@
-# Conference hall booking API
+# Conference Hall Booking API
 
 ![.NET 10](https://img.shields.io/badge/.NET-10.0-512BD4?style=flat-square&logo=dotnet)
 ![C#](https://img.shields.io/badge/C%23-14-239120?style=flat-square&logo=csharp)
 ![PostgreSQL](https://img.shields.io/badge/PostgreSQL-336791?style=flat-square&logo=postgresql)
 ![Tests](https://img.shields.io/badge/Tests-xUnit%20%7C%20FluentAssertions-blue?style=flat-square)
 
-REST API для бронювання конференц-залів із динамічним розрахунком цін, валідацією слотів та базовою бізнес-аналітикою. Створено на базі Minimal APIs, EF Core та PostgreSQL відповідно до принципів Clean Code.
+RESTful API for conference hall booking featuring dynamic pricing calculation, slot collision validation, and foundational business analytics. Built with Minimal APIs, EF Core, and PostgreSQL adhering to Clean Code and SOLID principles.
 
 ---
 
-## Технологічний стек
+## 🛠 Tech Stack
 
-* **Платформа:** .NET 10, C# 14 (Minimal APIs)
-* **Дані:** EF Core, PostgreSQL (`Npgsql`)
-* **Валідація та тести:** FluentValidation, xUnit, FluentAssertions
-* **Документація:** Swagger / OpenAPI
-
----
-
-## Ключовий функціонал
-
-* **Керування залами:** Додавання, редагування, безпечне видалення (захист через `DeleteBehavior.Restrict`).
-* **Пошук і бронювання:** Пошук залів за датою, часом та місткістю. Перевірка доступності слотів транслюється напряму в SQL (`NOT EXISTS`) без підтягування зайвих даних у пам'ять.
-* **Бізнес-аналітика (`/api/reports`):**
-  * `GET /api/reports/revenue` — виручка за період із розбивкою на оренду та додаткові послуги.
-  * `GET /api/reports/occupancy` — коефіцієнт утилізації залів (% зайнятих годин від робочого дня 06:00–23:00).
+* **Platform:** .NET 10, C# 14 (Minimal APIs)
+* **Data Access:** EF Core, PostgreSQL (`Npgsql`)
+* **Validation & Testing:** FluentValidation, xUnit, FluentAssertions
+* **Documentation:** Swagger / OpenAPI
 
 ---
 
-## Розрахунок вартості
+## 🚀 Key Features
 
-Погодинний підрахунок вартості залежно від часових інтервалів:
+* **Hall Management:** CRUD operations with cascade-delete protection using `DeleteBehavior.Restrict`.
+* **Search & Reservation:** Filter available halls by date, time window, and required capacity. Slot availability checks translate directly into optimized SQL (`NOT EXISTS`) without in-memory evaluation.
+* **Business Analytics (`/api/reports`):**
+  * `GET /api/reports/revenue` — Period revenue breakdown (room rental vs. extra services).
+  * `GET /api/reports/occupancy` — Hall utilization rate (% of booked hours within the operating window of 06:00–23:00).
 
-| Інтервал | Коефіцієнт | Опис |
+---
+
+## 💰 Dynamic Pricing Rules
+
+Hourly rate adjustments based on time slots:
+
+| Time Slot | Rate Multiplier | Description |
 |---|---|---|
-| **06:00 – 09:00** | `0.90x` | Ранкова знижка (-10%) |
-| **09:00 – 12:00, 14:00 – 18:00** | `1.00x` | Стандартний денний тариф |
-| **12:00 – 14:00** | `1.15x` | Піковий час (+15%) |
-| **18:00 – 23:00** | `0.80x` | Вечірня знижка (-20%) |
+| **06:00 – 09:00** | `0.90x` | Early morning discount (-10%) |
+| **09:00 – 12:00, 14:00 – 18:00** | `1.00x` | Standard daytime rate |
+| **12:00 – 14:00** | `1.15x` | Peak hours surcharge (+15%) |
+| **18:00 – 23:00** | `0.80x` | Evening discount (-20%) |
 
-*Вартість додаткових замовлених послуг додається фіксовано до суми оренди залу.*
+*Additional requested services (projector, sound, Wi-Fi) are added as flat-rate charges on top of the calculated room rental.*
 
 ---
 
-## Початкові тестові дані (seed data)
+## 📦 Seed Data
 
-Дані автоматично наповнюються сідером при старті програми:
+Pre-populated automatically on application startup:
 
-| Зал | Місткість | Базова ціна | Доступні послуги |
+| Hall | Capacity | Base Rate | Available Services |
 |---|---|---|---|
-| **Зал A** | 50 осіб | 2 000 грн/год | Проєктор (500 грн), Wi-Fi (300 грн), Звук (700 грн) |
-| **Зал B** | 100 осіб | 3 500 грн/год | Wi-Fi (300 грн) |
-| **Зал C** | 30 осіб | 1 500 грн/год | Звук (700 грн) |
+| **Hall A** | 50 seats | 2,000 UAH/h | Projector (500 UAH), Wi-Fi (300 UAH), Sound (700 UAH) |
+| **Hall B** | 100 seats | 3,500 UAH/h | Wi-Fi (300 UAH) |
+| **Hall C** | 30 seats | 1,500 UAH/h | Sound (700 UAH) |
 
 ---
 
-## Примітки для рецензента
+## 🏗 Architecture & Implementation Notes
 
-* **Авторизація:** Усі CRUD-операції відкрито для спрощення тестування рецензентом. У продакшн-середовищі адміністративні методи закриваються атрибутом авторизації (наприклад, `[Authorize(Roles = "Admin")]`).
-* **Connection String:** Рядок підключення з дефолтними креденшлами залишено в `appsettings.json` виключно для зручності локальної перевірки. Для продакшну конфігурація виноситься в змінні середовища або Secret Manager.
-* **Обробка часу:** Усі таймстемпи суворо конвертуються та зберігаються в UTC.
-* **Безпека:** Реалізовано централізований `IExceptionHandler`. Клієнт отримує безпечний `ProblemDetails` без витоку деталей внутрішньої реалізації.
+* **Authorization Scope:** CRUD operations are currently open to facilitate evaluation and local testing. In a production environment, management endpoints are restricted via role-based access control (e.g., `[Authorize(Roles = "Admin")]`).
+* **Connection String:** Default credentials are kept in `appsettings.json` strictly for local testing convenience. Production setups should inject configurations via Environment Variables or a Secret Manager.
+* **Time Handling:** All timestamps are strictly converted and stored in UTC.
+* **Resilience & Security:** Global exception handling is configured using `IExceptionHandler`, returning RFC 7807 compliant `ProblemDetails` to prevent leaking internal stack traces.
 
 ---
 
-## Швидкий запуск
+## ⚡ Quick Start
 
-1. Запустити базу даних:
-   docker compose up -d
+1. Run the database:
+```bash
+docker compose up -d
+```
 
-2. Запустити бекенд:
-   dotnet run
-   (Міграції та сідер виконаються автоматично).
+2. Run the application:
+```bash
+dotnet run
+```
+*(Database migrations and seed data apply automatically on startup).*
 
-3. Відкрити Swagger UI:
-   https://localhost:7267/swagger/index.html
+3. Open Swagger UI:
+```text
+https://localhost:7267/swagger/index.html
+```
 
-4. Запустити тести:
-   dotnet test
+4. Run unit tests:
+```bash
+dotnet test
+```
